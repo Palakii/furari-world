@@ -1,0 +1,220 @@
+{
+  "COMMON": [
+    {
+      "id": "common_001",
+      "name": "Puffe Mber",
+      "type": "fire",
+      "img": "images/cards/common/common_001.png",
+      "emoji": "🔥"
+    },
+    {
+      "id": "common_002",
+      "name": "Ink Sprite",
+      "type": "water",
+      "img": "images/cards/common/common_002.png",
+      "emoji": "💧"
+    },
+    {
+      "id": "common_003",
+      "name": "sproute",
+      "type": "leaf",
+      "img": "images/cards/common/common_003.png",
+      "emoji": "🌲"
+    },
+    {
+      "id": "common_004",
+      "name": "zippy.",
+      "type": "elecric",
+      "img": "images/cards/common/common_004.png",
+      "emoji": "⚡"
+    },
+    {
+      "id": "common_005",
+      "name": "whirly",
+      "type": "wind",
+      "img": "images/cards/common/common_005.png",
+      "emoji": "🌪️"
+    },
+    {
+      "id": "common_006",
+      "name": "Thunder Ashigaru",
+      "type": "武士",
+      "img": null,
+      "emoji": "⚡"
+    },
+    {
+      "id": "common_007",
+      "name": "River Hermit",
+      "type": "隠者",
+      "img": null,
+      "emoji": "🎋"
+    },
+    {
+      "id": "common_008",
+      "name": "Copper Golem",
+      "type": "機械",
+      "img": null,
+      "emoji": "🤖"
+    },
+    {
+      "id": "common_009",
+      "name": "Petal Dancer",
+      "type": "踊子",
+      "img": null,
+      "emoji": "🌸"
+    },
+    {
+      "id": "common_010",
+      "name": "Salt Road Scout",
+      "type": "斥候",
+      "img": null,
+      "emoji": "🗺️"
+    }
+  ],
+  "RARE": [
+    {
+      "id": "rare_001",
+      "name": "Blaze Pup",
+      "type": "fire",
+      "img": "images/cards/rare/rare_001.png",
+      "emoji": "🔥"
+    },
+    {
+      "id": "rare_002",
+      "name": "Storm Monk",
+      "type": "僧侶",
+      "img": "images/cards/rare/rare_002.png",
+      "emoji": "🌊"
+    },
+    {
+      "id": "rare_003",
+      "name": "Jade Serpent",
+      "type": "龍族",
+      "img": "images/cards/rare/rare_003.png",
+      "emoji": "🐍"
+    },
+    {
+      "id": "rare_004",
+      "name": "Ghost of the Bridge",
+      "type": "幽霊",
+      "img": null,
+      "emoji": "👻"
+    },
+    {
+      "id": "rare_005",
+      "name": "Silk Road Merchant",
+      "type": "商人",
+      "img": null,
+      "emoji": "🎎"
+    },
+    {
+      "id": "rare_006",
+      "name": "Iron Tanuki",
+      "type": "妖怪",
+      "img": null,
+      "emoji": "🦡"
+    },
+    {
+      "id": "rare_007",
+      "name": "Wind Calligrapher",
+      "type": "書家",
+      "img": null,
+      "emoji": "📜"
+    },
+    {
+      "id": "rare_008",
+      "name": "Ember Fox",
+      "type": "妖狐",
+      "img": null,
+      "emoji": "🔥"
+    }
+  ],
+  "EPIC": [
+    {
+      "id": "epic_001",
+      "name": "Dragon Shogun",
+      "type": "将軍",
+      "img": null,
+      "emoji": "🐉"
+    },
+    {
+      "id": "epic_002",
+      "name": "Void Tengu",
+      "type": "天狗",
+      "img": null,
+      "emoji": "🌑"
+    },
+    {
+      "id": "epic_003",
+      "name": "Crimson Oni",
+      "type": "鬼神",
+      "img": null,
+      "emoji": "👹"
+    },
+    {
+      "id": "epic_004",
+      "name": "Moonlit Samurai",
+      "type": "武神",
+      "img": null,
+      "emoji": "🌕"
+    },
+    {
+      "id": "epic_005",
+      "name": "Arc Sorceress",
+      "type": "魔道士",
+      "img": null,
+      "emoji": "🔮"
+    },
+    {
+      "id": "epic_006",
+      "name": "Twin Blade Widow",
+      "type": "刺客",
+      "img": null,
+      "emoji": "🗡️"
+    },
+    {
+      "id": "epic_007",
+      "name": "Stormgate Warden",
+      "type": "守門",
+      "img": null,
+      "emoji": "⛩️"
+    },
+    {
+      "id": "epic_008",
+      "name": "Neon Oni",
+      "type": "電鬼",
+      "img": null,
+      "emoji": "💜"
+    }
+  ],
+  "LEGENDARY": [
+    {
+      "id": "legendary_001",
+      "name": "The Last Daimyo",
+      "type": "大名",
+      "img": null,
+      "emoji": "👑"
+    },
+    {
+      "id": "legendary_002",
+      "name": "Genesis Ryū",
+      "type": "竜神",
+      "img": null,
+      "emoji": "🌟"
+    },
+    {
+      "id": "legendary_003",
+      "name": "Infinite Zero",
+      "type": "無限",
+      "img": null,
+      "emoji": "♾️"
+    },
+    {
+      "id": "legendary_004",
+      "name": "Arc Godmother",
+      "type": "神母",
+      "img": null,
+      "emoji": "✨"
+    }
+  ]
+}
