@@ -166,9 +166,13 @@
                     <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-2">
                         <span>✓</span><span>Swap Successful!</span>
                     </div>
-                    <div class="text-gray-500 mb-1">Transaction Hash:</div>
-                    <a id="txLink" href="#" target="_blank" class="text-indigo-400 break-all hover:underline"
-                        id="txHash"></a>
+                    <div class="flex justify-between text-gray-500 mb-1">
+                        <span>Amount Out</span>
+                        <span id="amountOut" class="text-white"></span>
+                    </div>
+                    <div class="text-gray-500 mb-1">Transaction:</div>
+                    <a id="txLink" href="#" target="_blank"
+                        class="text-indigo-400 break-all hover:underline text-[11px]"></a>
                 </div>
 
             </div>
@@ -292,9 +296,12 @@
                 const txHash = data.txHash;
                 const explorer = `https://testnet.arcscan.app/tx/${txHash}`;
 
+                // แสดงผล — แก้ตรงนี้
                 document.getElementById('txResult').classList.remove('hidden');
-                document.getElementById('txHash').textContent = txHash;
-                document.getElementById('txLink').href = explorer;
+                document.getElementById('amountOut').textContent =
+                    data.amountOut ? `${data.amountOut} ${data.tokenOut}` : `~ ${data.tokenOut}`;
+                document.getElementById('txLink').textContent = data.explorerUrl || data.txHash;
+                document.getElementById('txLink').href = data.explorerUrl || `https://testnet.arcscan.app/tx/${data.txHash}`;
 
                 showToast(`✓ Swapped ${amountIn} ${data.tokenIn} → ${data.tokenOut}`);
 
