@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Furari World — Swap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .jp {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        #toast {
+            transition: transform 0.3s, opacity 0.3s;
+            transform: translateY(80px);
+            opacity: 0;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .token-btn {
+            transition: all 0.2s;
+        }
+
+        .token-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.15);
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0B0F1A] text-white min-h-screen overflow-x-hidden">
+
+    <!-- Toast -->
+    <div id="toast"
+        class="fixed bottom-6 right-6 z-50 bg-[#1a2236] border border-white/10 rounded-xl px-5 py-3 text-sm max-w-xs pointer-events-none">
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="relative z-10 flex justify-between items-center px-8 py-5 border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <span class="jp text-red-500 text-sm tracking-widest">弧</span>
+            <h1 class="text-lg font-bold tracking-[4px]">FURARI WORLD</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <!-- NAV LINKS -->
+            <a href="index.html"
+                class="text-xs text-gray-500 hover:text-white transition-colors tracking-widest">CARDS</a>
+            <a href="swap.html"
+                class="text-xs text-indigo-400 tracking-widest border-b border-indigo-400 pb-0.5">SWAP</a>
+            <div id="networkChip"
+                class="hidden text-[11px] text-emerald-400 border border-emerald-400/30 rounded-full px-3 py-1">
+                Arc Testnet ✓
+            </div>
+            <button id="btnConnect" onclick="connectWallet()"
+                class="px-5 py-2 rounded-lg border border-red-500/50 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all">
+                Connect Wallet
+            </button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="relative z-10 text-center pt-16 pb-10 px-4">
+        <p class="jp text-indigo-400 text-[11px] tracking-[6px] mb-4">スワップ</p>
+        <h2 class="text-4xl font-extrabold mb-3">Swap Tokens</h2>
+        <p class="text-gray-500 text-sm">Exchange USDC and EURC on Arc Testnet</p>
+    </section>
+
+    <!-- SWAP CARD -->
+    <section class="relative z-10 px-4 pb-24 flex justify-center">
+        <div class="w-full max-w-md">
+
+            <!-- Card -->
+            <div class="bg-[#111827] rounded-3xl p-6 border border-white/8">
+
+                <!-- Direction toggle -->
+                <div class="flex gap-3 mb-6">
+                    <button id="btn-usdc-eurc" onclick="setDirection('usdc_to_eurc')"
+                        class="token-btn active flex-1 py-2.5 rounded-xl border border-white/10 text-sm font-semibold text-gray-400">
+                        USDC → EURC
+                    </button>
+                    <button id="btn-eurc-usdc" onclick="setDirection('eurc_to_usdc')"
+                        class="token-btn flex-1 py-2.5 rounded-xl border border-white/10 text-sm font-semibold text-gray-400">
+                        EURC → USDC
+                    </button>
+                </div>
+
+                <!-- From -->
+                <div class="bg-[#0d1422] rounded-2xl p-4 mb-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-gray-500 tracking-wider">FROM</span>
+                        <span class="text-xs text-gray-500" id="fromLabel">USDC</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl" id="fromIcon">💵</span>
+                        <input id="amountIn" type="number" placeholder="0.00" min="0.01" step="0.01"
+                            class="flex-1 bg-transparent text-2xl font-bold outline-none text-white placeholder-gray-700" />
+                        <span class="text-sm font-bold text-gray-400" id="fromToken">USDC</span>
+                    </div>
+                </div>
+
+                <!-- Arrow -->
+                <div class="text-center my-1 text-gray-600 text-xl">↓</div>
+
+                <!-- To -->
+                <div class="bg-[#0d1422] rounded-2xl p-4 mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-gray-500 tracking-wider">TO</span>
+                        <span class="text-xs text-gray-500" id="toLabel">EURC</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl" id="toIcon">💶</span>
+                        <div class="flex-1 text-2xl font-bold text-gray-600" id="toAmount">~</div>
+                        <span class="text-sm font-bold text-gray-400" id="toToken">EURC</span>
+                    </div>
+                </div>
+
+                <!-- Info row -->
+                <div class="flex justify-between text-xs text-gray-600 mb-6 px-1">
+                    <span>Rate</span>
+                    <span id="rateInfo">~1 USDC = 1 EURC</span>
+                </div>
+
+                <!-- Swap button -->
+                <button id="btnSwap" onclick="doSwap()"
+                    class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold text-base tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                    Connect Wallet to Swap
+                </button>
+
+                <!-- TX Result -->
+                <div id="txResult" class="hidden mt-5 p-4 bg-[#0d1422] rounded-2xl text-xs">
+                    <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-2">
+                        <span>✓</span><span>Swap Successful!</span>
+                    </div>
+                    <div class="text-gray-500 mb-1">Transaction Hash:</div>
+                    <a id="txLink" href="#" target="_blank" class="text-indigo-400 break-all hover:underline"
+                        id="txHash"></a>
+                </div>
+
+            </div>
+
+            <!-- Note -->
+            <p class="text-center text-xs text-gray-700 mt-4 tracking-wide">
+                Powered by Arc App Kit · Testnet only
+            </p>
+
+        </div>
+    </section>
+
+    <script>
+        // ── STATE ─────────────────────────────────────────────────────────────────────
+        let wallet = null;
+        let direction = 'usdc_to_eurc';
+
+        // ── WALLET ────────────────────────────────────────────────────────────────────
+        async function connectWallet() {
+            if (wallet) return;
+            if (!window.ethereum) { showToast('กรุณาติดตั้ง MetaMask ก่อน', true); return; }
+
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                wallet = accounts[0];
+
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x400' }],
+                    });
+                } catch (e) {
+                    if (e.code === 4902) {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0x400',
+                                chainName: 'Arc Testnet',
+                                nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+                                rpcUrls: ['https://rpc-testnet.arc.network'],
+                                blockExplorerUrls: ['https://testnet.arcscan.app'],
+                            }]
+                        });
+                    }
+                }
+
+                // อัพเดท UI
+                const btn = document.getElementById('btnConnect');
+                btn.textContent = wallet.slice(0, 6) + '…' + wallet.slice(-4);
+                btn.className = 'px-5 py-2 rounded-lg border border-emerald-500/40 text-emerald-400 text-sm font-semibold cursor-default';
+
+                document.getElementById('networkChip').classList.remove('hidden');
+                document.getElementById('btnSwap').textContent = 'Swap Now';
+                document.getElementById('btnSwap').disabled = false;
+
+                showToast('Wallet connected ✓');
+
+            } catch (err) {
+                showToast('Connection rejected', true);
+            }
+        }
+
+        // ── DIRECTION ─────────────────────────────────────────────────────────────────
+        function setDirection(dir) {
+            direction = dir;
+
+            const isUtoE = dir === 'usdc_to_eurc';
+
+            document.getElementById('fromLabel').textContent = isUtoE ? 'USDC' : 'EURC';
+            document.getElementById('toLabel').textContent = isUtoE ? 'EURC' : 'USDC';
+            document.getElementById('fromToken').textContent = isUtoE ? 'USDC' : 'EURC';
+            document.getElementById('toToken').textContent = isUtoE ? 'EURC' : 'USDC';
+            document.getElementById('fromIcon').textContent = isUtoE ? '💵' : '💶';
+            document.getElementById('toIcon').textContent = isUtoE ? '💶' : '💵';
+            document.getElementById('rateInfo').textContent = isUtoE ? '~1 USDC = 1 EURC' : '~1 EURC = 1 USDC';
+
+            // active state
+            document.getElementById('btn-usdc-eurc').classList.toggle('active', isUtoE);
+            document.getElementById('btn-eurc-usdc').classList.toggle('active', !isUtoE);
+
+            // reset
+            document.getElementById('toAmount').textContent = '~';
+            document.getElementById('amountIn').value = '';
+            document.getElementById('txResult').classList.add('hidden');
+        }
+
+        // ── PREVIEW AMOUNT ────────────────────────────────────────────────────────────
+        document.getElementById('amountIn').addEventListener('input', function () {
+            const val = parseFloat(this.value);
+            document.getElementById('toAmount').textContent = isNaN(val) ? '~' : '≈ ' + val.toFixed(2);
+        });
+
+        // ── SWAP ──────────────────────────────────────────────────────────────────────
+        async function doSwap() {
+            if (!wallet) { showToast('กรุณา Connect Wallet ก่อน', true); return; }
+
+            const amountIn = parseFloat(document.getElementById('amountIn').value);
+            if (!amountIn || amountIn <= 0) {
+                showToast('กรุณาใส่จำนวนที่ต้องการ swap', true);
+                return;
+            }
+
+            // Loading state
+            const btn = document.getElementById('btnSwap');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spin inline-block">⟳</span> Swapping...';
+            document.getElementById('txResult').classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/swap', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amountIn, direction }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.message || data.error || 'Swap failed');
+
+                // แสดงผล
+                const txHash = data.txHash;
+                const explorer = `https://testnet.arcscan.app/tx/${txHash}`;
+
+                document.getElementById('txResult').classList.remove('hidden');
+                document.getElementById('txHash').textContent = txHash;
+                document.getElementById('txLink').href = explorer;
+
+                showToast(`✓ Swapped ${amountIn} ${data.tokenIn} → ${data.tokenOut}`);
+
+            } catch (err) {
+                showToast(err.message || 'Swap failed', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Swap Now';
+            }
+        }
+
+        // ── TOAST ─────────────────────────────────────────────────────────────────────
+        let toastTimer;
+        function showToast(msg, err = false) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.style.color = err ? '#f87171' : '#34d399';
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+        }
+    </script>
+
+</body>
+
+</html>

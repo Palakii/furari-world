@@ -14,5 +14,10 @@
     "@nomicfoundation/hardhat-toolbox": "^7.0.0",
     "dotenv": "^17.4.2",
     "hardhat": "^3.4.0"
+  },
+  "dependencies": {
+    "@circle-fin/adapter-viem-v2": "^1.8.3",
+    "@circle-fin/app-kit": "^1.4.1",
+    "viem": "^2.48.4"
   }
 }
