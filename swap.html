@@ -212,14 +212,14 @@
                 try {
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '0x4CE352' }], // 5042002 = Arc Testnet
+                        params: [{ chainId: '5042002' }], // 5042002 = Arc Testnet
                     });
                 } catch (e) {
                     if (e.code === 4902) {
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: '0x4CE352',
+                                chainId: '5042002',
                                 chainName: 'Arc Testnet',
                                 nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
                                 rpcUrls: ['https://rpc.testnet.arc.network'],
