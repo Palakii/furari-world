@@ -102,7 +102,6 @@
     <section class="relative z-10 px-4 pb-24 flex justify-center">
         <div class="w-full max-w-md space-y-4">
 
-            <!-- Main card -->
             <div class="bg-[#111827] rounded-3xl p-6 border border-white/8 space-y-4">
 
                 <!-- Direction -->
@@ -153,37 +152,20 @@
                     <span id="rateInfo">~1 USDC = 1 EURC</span>
                 </div>
 
-                <!-- STEP 1: Approve button -->
-                <div id="approveSection" class="hidden">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div
-                            class="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500 flex items-center justify-center text-[10px] text-indigo-400 font-bold">
-                            1</div>
-                        <span class="text-xs text-gray-400 tracking-wide">Approve token spending</span>
-                    </div>
-                    <button id="btnApprove" onclick="doApprove()"
-                        class="w-full py-3.5 rounded-2xl bg-indigo-900/50 border border-indigo-500/50 hover:bg-indigo-800/50 font-bold text-sm text-indigo-300 tracking-wide transition-all">
-                        Approve
-                    </button>
-                </div>
+                <!-- Swap button -->
+                <button id="btnSwap" onclick="handleSwapClick()"
+                    class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold text-base tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                    Connect Wallet to Swap
+                </button>
 
-                <!-- STEP 2: Swap button -->
-                <div id="swapSection">
-                    <div id="stepLabel" class="hidden items-center gap-2 mb-2">
-                        <div
-                            class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500 flex items-center justify-center text-[10px] text-emerald-400 font-bold">
-                            2</div>
-                        <span class="text-xs text-gray-400 tracking-wide">Confirm swap</span>
-                    </div>
-                    <button id="btnSwap" onclick="handleSwapClick()"
-                        class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold text-base tracking-wide transition-all">
-                        Connect Wallet to Swap
-                    </button>
-                </div>
+                <!-- Note -->
+                <p class="text-center text-[11px] text-gray-600">
+                    App Kit handles approval automatically
+                </p>
 
             </div>
 
-            <!-- TX Result card -->
+            <!-- TX Result -->
             <div id="txResult" class="hidden bg-[#0d1a14] rounded-2xl p-5 border border-emerald-500/20">
                 <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-3">
                     <span class="text-lg">✓</span>
@@ -195,19 +177,19 @@
                         <span id="resultSummary" class="text-white font-semibold"></span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-500">Received (est.)</span>
+                        <span class="text-gray-500">Received</span>
                         <span id="resultAmountOut" class="text-emerald-400 font-semibold"></span>
                     </div>
                     <div class="border-t border-white/5 pt-2">
                         <div class="text-gray-500 mb-1">Transaction Hash</div>
                         <a id="txHashLink" href="#" target="_blank"
-                            class="text-indigo-400 break-all hover:underline leading-relaxed"></a>
+                            class="text-indigo-400 break-all hover:underline leading-relaxed text-[11px]"></a>
                     </div>
                 </div>
             </div>
 
             <p class="text-center text-xs text-gray-700 tracking-wide">
-                Powered by Arc App Kit · Arc Testnet Only · Do not use real funds
+                Powered by Arc App Kit · Testnet only
             </p>
 
         </div>
@@ -217,7 +199,6 @@
         // ── STATE ─────────────────────────────────────────────────────────────────────
         let wallet = null;
         let direction = 'usdc_to_eurc';
-        let approved = false;
 
         // ── WALLET ────────────────────────────────────────────────────────────────────
         async function connectWallet() {
@@ -231,32 +212,24 @@
                 try {
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '5042002' }], // ← ใส่ chainId เดิมที่ใช้ได้
+                        params: [{ chainId: '0x4CE352' }], // 5042002 = Arc Testnet
                     });
                 } catch (e) {
                     if (e.code === 4902) {
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: '5042002',
+                                chainId: '0x4CE352',
                                 chainName: 'Arc Testnet',
-                                nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
-                                rpcUrls: ['https://rpc-testnet.arc.network'],
+                                nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+                                rpcUrls: ['https://rpc.testnet.arc.network'],
                                 blockExplorerUrls: ['https://testnet.arcscan.app'],
                             }]
                         });
                     }
                 }
 
-                // อัพเดท UI
-                const btn = document.getElementById('btnConnect');
-                btn.textContent = wallet.slice(0, 6) + '…' + wallet.slice(-4);
-                btn.className = 'px-5 py-2 rounded-lg border border-emerald-500/40 text-emerald-400 text-sm font-semibold cursor-default';
-                document.getElementById('networkChip').classList.remove('hidden');
-
-                // แสดงปุ่ม Approve
-                document.getElementById('btnSwap').textContent = 'Swap Now';
-                showApproveFlow();
+                setWalletUI(wallet);
                 showToast('Wallet connected ✓');
 
             } catch (err) {
@@ -264,12 +237,31 @@
             }
         }
 
+        function setWalletUI(addr) {
+            const btn = document.getElementById('btnConnect');
+            btn.textContent = addr.slice(0, 6) + '…' + addr.slice(-4);
+            btn.className = 'px-5 py-2 rounded-lg border border-emerald-500/40 text-emerald-400 text-sm font-semibold cursor-default';
+            document.getElementById('networkChip').classList.remove('hidden');
+            document.getElementById('btnSwap').textContent = 'Swap Now';
+            document.getElementById('btnSwap').disabled = false;
+        }
+
+        // ── AUTO-CONNECT ──────────────────────────────────────────────────────────────
+        window.addEventListener('load', async () => {
+            if (!window.ethereum) return;
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    wallet = accounts[0];
+                    setWalletUI(wallet);
+                }
+            } catch (e) { }
+        });
+
         // ── DIRECTION ─────────────────────────────────────────────────────────────────
         function setDirection(dir) {
             direction = dir;
-            approved = false;
             const isUtoE = dir === 'usdc_to_eurc';
-
             document.getElementById('fromLabel').textContent = isUtoE ? 'USDC' : 'EURC';
             document.getElementById('toLabel').textContent = isUtoE ? 'EURC' : 'USDC';
             document.getElementById('fromToken').textContent = isUtoE ? 'USDC' : 'EURC';
@@ -277,102 +269,18 @@
             document.getElementById('fromIcon').textContent = isUtoE ? '💵' : '💶';
             document.getElementById('toIcon').textContent = isUtoE ? '💶' : '💵';
             document.getElementById('rateInfo').textContent = isUtoE ? '~1 USDC = 1 EURC' : '~1 EURC = 1 USDC';
-
             document.getElementById('btn-usdc-eurc').classList.toggle('active', isUtoE);
             document.getElementById('btn-eurc-usdc').classList.toggle('active', !isUtoE);
             document.getElementById('toAmount').textContent = '~';
             document.getElementById('amountIn').value = '';
             document.getElementById('txResult').classList.add('hidden');
-
-            // reset approve state
-            if (wallet) showApproveFlow();
         }
 
-        // preview amount
+        // preview
         document.getElementById('amountIn').addEventListener('input', function () {
             const val = parseFloat(this.value);
             document.getElementById('toAmount').textContent = isNaN(val) ? '~' : '≈ ' + val.toFixed(2);
         });
-
-        // ── APPROVE FLOW ──────────────────────────────────────────────────────────────
-        function showApproveFlow() {
-            document.getElementById('approveSection').classList.remove('hidden');
-            document.getElementById('stepLabel').classList.remove('hidden');
-            document.getElementById('stepLabel').style.display = 'flex';
-
-            // reset approve state
-            approved = false;
-            const btnApprove = document.getElementById('btnApprove');
-            btnApprove.textContent = 'Approve';
-            btnApprove.disabled = false;
-            btnApprove.className = 'w-full py-3.5 rounded-2xl bg-indigo-900/50 border border-indigo-500/50 hover:bg-indigo-800/50 font-bold text-sm text-indigo-300 tracking-wide transition-all';
-        }
-
-        async function doApprove() {
-            if (!wallet) { showToast('กรุณา Connect Wallet ก่อน', true); return; }
-
-            const amountIn = parseFloat(document.getElementById('amountIn').value);
-            if (!amountIn || amountIn <= 0) {
-                showToast('กรุณาใส่จำนวนก่อน Approve', true);
-                return;
-            }
-
-            const btnApprove = document.getElementById('btnApprove');
-            btnApprove.disabled = true;
-            btnApprove.innerHTML = '<span class="spin">⟳</span> Approving...';
-
-            try {
-                // USDC/EURC contract addresses บน Arc Testnet
-                const tokenAddress = direction === 'usdc_to_eurc'
-                    ? '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' // USDC Arc Testnet
-                    : '0xA0d71B9877f44C744546D649147E3F1e70a93760'; // EURC Arc Testnet
-
-                // PackOpener หรือ Swap contract ที่ต้อง approve
-                const spenderAddress = '0x000000000022D473030F116dDEE9F6B43aC78BA3'; // Permit2
-
-                // ERC20 approve ABI
-                const approveData = '0x095ea7b3' +
-                    spenderAddress.replace('0x', '').padStart(64, '0') +
-                    Math.floor(amountIn * 1e6).toString(16).padStart(64, '0');
-
-                const txHash = await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [{
-                        from: wallet,
-                        to: tokenAddress,
-                        data: approveData,
-                    }]
-                });
-
-                // รอ tx confirm
-                await waitForTx(txHash);
-
-                // อัพเดท UI → Approved
-                approved = true;
-                btnApprove.innerHTML = '✓ Approved';
-                btnApprove.className = 'w-full py-3.5 rounded-2xl bg-emerald-900/40 border border-emerald-500/40 font-bold text-sm text-emerald-400 tracking-wide cursor-default';
-
-                showToast('Approved ✓ กด Swap Now ได้เลย');
-
-            } catch (err) {
-                btnApprove.disabled = false;
-                btnApprove.innerHTML = 'Approve';
-                showToast(err.message || 'Approve failed', true);
-            }
-        }
-
-        // รอ transaction confirm
-        async function waitForTx(txHash) {
-            for (let i = 0; i < 30; i++) {
-                await new Promise(r => setTimeout(r, 2000));
-                const receipt = await window.ethereum.request({
-                    method: 'eth_getTransactionReceipt',
-                    params: [txHash]
-                });
-                if (receipt) return receipt;
-            }
-            throw new Error('Transaction timeout');
-        }
 
         // ── SWAP ──────────────────────────────────────────────────────────────────────
         function handleSwapClick() {
@@ -387,13 +295,13 @@
                 return;
             }
 
-            const btnSwap = document.getElementById('btnSwap');
-            btnSwap.disabled = true;
-            btnSwap.innerHTML = '<span class="spin">⟳</span> Swapping...';
+            const btn = document.getElementById('btnSwap');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spin">⟳</span> Swapping...';
             document.getElementById('txResult').classList.add('hidden');
 
             try {
-                const res = await fetch('/api/swap', {
+                const res = await fetch('https://furari-world.vercel.app/api/swap', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ amountIn, direction }),
@@ -402,31 +310,25 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || data.error || 'Swap failed');
 
-                // ── แสดง TX Result ────────────────────────────────────────────────────
+                // แสดงผล
                 const tokenIn = direction === 'usdc_to_eurc' ? 'USDC' : 'EURC';
                 const tokenOut = direction === 'usdc_to_eurc' ? 'EURC' : 'USDC';
                 const txHash = data.txHash || '';
-                const amountOut = data.amountOut || '';
-                const explorerUrl = txHash
-                    ? `https://testnet.arcscan.app/tx/${txHash}`
-                    : '#';
+                const explorerUrl = data.explorerUrl || (txHash ? `https://testnet.arcscan.app/tx/${txHash}` : '#');
 
                 document.getElementById('txResult').classList.remove('hidden');
                 document.getElementById('resultSummary').textContent = `${amountIn} ${tokenIn} → ${tokenOut}`;
-                document.getElementById('resultAmountOut').textContent = amountOut ? `${amountOut} ${tokenOut}` : `~ ${tokenOut}`;
+                document.getElementById('resultAmountOut').textContent = data.amountOut ? `${data.amountOut} ${tokenOut}` : `~ ${tokenOut}`;
                 document.getElementById('txHashLink').textContent = txHash || 'Pending...';
                 document.getElementById('txHashLink').href = explorerUrl;
 
                 showToast(`✓ Swapped ${amountIn} ${tokenIn} → ${tokenOut}`);
 
-                // reset approve
-                showApproveFlow();
-
             } catch (err) {
                 showToast(err.message || 'Swap failed', true);
             } finally {
-                btnSwap.disabled = false;
-                btnSwap.innerHTML = 'Swap Now';
+                btn.disabled = false;
+                btn.innerHTML = 'Swap Now';
             }
         }
 
@@ -440,28 +342,6 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
         }
-        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
-        // ── เช็ค wallet ที่ connect อยู่แล้วตอนโหลดหน้า ──────────────────────────
-        window.addEventListener('load', async () => {
-            if (!window.ethereum) return;
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    wallet = accounts[0];
-
-                    const btn = document.getElementById('btnConnect');
-                    btn.textContent = wallet.slice(0, 6) + '…' + wallet.slice(-4);
-                    btn.className = 'px-5 py-2 rounded-lg border border-emerald-500/40 text-emerald-400 text-sm font-semibold cursor-default';
-
-                    document.getElementById('networkChip').classList.remove('hidden');
-                    document.getElementById('btnSwap').textContent = 'Swap Now';
-
-                    showApproveFlow();
-                }
-            } catch (err) {
-                console.log('Auto-connect check failed:', err);
-            }
-        });
     </script>
 </body>
 
