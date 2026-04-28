@@ -81,13 +81,29 @@
                 class="text-xs text-gray-500 hover:text-white transition-colors tracking-widest">CARDS</a>
             <a href="swap.html"
                 class="text-xs text-indigo-400 tracking-widest border-b border-indigo-400 pb-0.5">SWAP</a>
-            <div id="networkChip"
-                class="hidden text-[11px] text-emerald-400 border border-emerald-400/30 rounded-full px-3 py-1">Arc
-                Testnet ✓</div>
-            <button id="btnConnect" onclick="connectWallet()"
-                class="px-5 py-2 rounded-lg border border-red-500/50 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all">
-                Connect Wallet
-            </button>
+            <div id="balanceChips" class="hidden flex items-center gap-2 text-[11px]">
+                <span class="text-emerald-400 border border-emerald-400/30 rounded-full px-3 py-1" id="usdcBal">USDC:
+                    —</span>
+                <span class="text-blue-400 border border-blue-400/30 rounded-full px-3 py-1" id="eurcBal">EURC: —</span>
+            </div>
+            <div class="relative">
+                <button id="btnConnect" onclick="handleWalletBtn()"
+                    class="px-5 py-2 rounded-lg border border-red-500/50 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all">
+                    Connect Wallet
+                </button>
+                <!-- Dropdown -->
+                <div id="walletDropdown"
+                    class="hidden absolute right-0 top-12 bg-[#1a2236] border border-white/10 rounded-xl overflow-hidden w-48 z-50 shadow-xl">
+                    <button onclick="copyAddress()"
+                        class="w-full px-4 py-3 text-left text-sm text-gray-300 hover:bg-white/5 transition-colors flex items-center gap-2">
+                        <span>📋</span> Copy Address
+                    </button>
+                    <button onclick="disconnect()"
+                        class="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-2">
+                        <span>🔌</span> Disconnect
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -101,7 +117,6 @@
     <!-- SWAP CARD -->
     <section class="relative z-10 px-4 pb-24 flex justify-center">
         <div class="w-full max-w-md space-y-4">
-
             <div class="bg-[#111827] rounded-3xl p-6 border border-white/8 space-y-4">
 
                 <!-- Direction -->
@@ -153,23 +168,20 @@
                 </div>
 
                 <!-- Swap button -->
-                <button id="btnSwap" onclick="handleSwapClick()"
+                <button id="btnSwap" onclick="handleSwapClick()" disabled
                     class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 font-bold text-base tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                     Connect Wallet to Swap
                 </button>
 
-                <!-- Note -->
                 <p class="text-center text-[11px] text-gray-600">
-                    App Kit handles approval automatically
+                    Powered by Arc App Kit
                 </p>
-
             </div>
 
             <!-- TX Result -->
             <div id="txResult" class="hidden bg-[#0d1a14] rounded-2xl p-5 border border-emerald-500/20">
                 <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-3">
-                    <span class="text-lg">✓</span>
-                    <span>Swap Successful!</span>
+                    <span class="text-lg">✓</span><span>Swap Successful!</span>
                 </div>
                 <div class="space-y-2 text-xs">
                     <div class="flex justify-between">
@@ -188,38 +200,62 @@
                 </div>
             </div>
 
-            <p class="text-center text-xs text-gray-700 tracking-wide">
-                Powered by Arc App Kit · Testnet only
-            </p>
-
+            <p class="text-center text-xs text-gray-700 tracking-wide">Powered by Arc App Kit</p>
         </div>
     </section>
 
-    <script>
+    <script type="module">
+        // ── Import App Kit จาก CDN (ESM) ────────────────────────────────────────────
+        import { AppKit } from 'https://esm.sh/@circle-fin/app-kit@latest';
+        import { createViemAdapterFromProvider } from 'https://esm.sh/@circle-fin/adapter-viem-v2@latest';
+
+        // ── CONFIG ────────────────────────────────────────────────────────────────────
+        const KIT_KEY = '5fa86dbdd8f57394cd324e300cf3c8a3:0ad3f3b110ea73d64c1e9fd06ad2e5fc'; // ← ใส่ KIT_KEY จริง
+        const ARC_CHAIN_ID = '5042002'; // 5042002 = Arc Testnet
+
+        // USDC และ EURC contract บน Arc Testnet
+        const TOKEN_CONTRACTS = {
+            USDC: '0x3600000000000000000000000000000000000000',
+            EURC: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
+        };
+
+        // ERC20 balanceOf ABI (minimal)
+        const ERC20_ABI_BALANCE = '0x70a08231';
+
         // ── STATE ─────────────────────────────────────────────────────────────────────
         let wallet = null;
+        let kit = null;
+        let adapter = null;
         let direction = 'usdc_to_eurc';
 
         // ── WALLET ────────────────────────────────────────────────────────────────────
+        window.handleWalletBtn = function () {
+            if (wallet) {
+                toggleDropdown();
+            } else {
+                connectWallet();
+            }
+        };
+
         async function connectWallet() {
-            if (wallet) return;
             if (!window.ethereum) { showToast('กรุณาติดตั้ง MetaMask ก่อน', true); return; }
 
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 wallet = accounts[0];
 
+                // Switch to Arc Testnet
                 try {
                     await window.ethereum.request({
                         method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: '5042002' }], // 5042002 = Arc Testnet
+                        params: [{ chainId: ARC_CHAIN_ID }],
                     });
                 } catch (e) {
                     if (e.code === 4902) {
                         await window.ethereum.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
-                                chainId: '5042002',
+                                chainId: ARC_CHAIN_ID,
                                 chainName: 'Arc Testnet',
                                 nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
                                 rpcUrls: ['https://rpc.testnet.arc.network'],
@@ -229,21 +265,99 @@
                     }
                 }
 
+                // ── สร้าง adapter จาก MetaMask ของ user ตาม doc ────────────────────────
+                adapter = await createViemAdapterFromProvider({
+                    provider: window.ethereum,
+                });
+
+                kit = new AppKit();
+
                 setWalletUI(wallet);
+                await fetchBalances();
                 showToast('Wallet connected ✓');
 
             } catch (err) {
+                console.error(err);
                 showToast('Connection rejected', true);
             }
         }
 
         function setWalletUI(addr) {
             const btn = document.getElementById('btnConnect');
-            btn.textContent = addr.slice(0, 6) + '…' + addr.slice(-4);
-            btn.className = 'px-5 py-2 rounded-lg border border-emerald-500/40 text-emerald-400 text-sm font-semibold cursor-default';
-            document.getElementById('networkChip').classList.remove('hidden');
+            btn.textContent = addr.slice(0, 6) + '…' + addr.slice(-4) + ' ▾';
+            btn.className = 'px-5 py-2 rounded-lg border border-emerald-500/40 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/10 transition-all';
+
+            document.getElementById('balanceChips').classList.remove('hidden');
             document.getElementById('btnSwap').textContent = 'Swap Now';
             document.getElementById('btnSwap').disabled = false;
+        }
+
+        // ── DISCONNECT ────────────────────────────────────────────────────────────────
+        window.disconnect = function () {
+            wallet = null;
+            kit = null;
+            adapter = null;
+
+            const btn = document.getElementById('btnConnect');
+            btn.textContent = 'Connect Wallet';
+            btn.className = 'px-5 py-2 rounded-lg border border-red-500/50 text-red-400 text-sm font-semibold hover:bg-red-500/10 transition-all';
+
+            document.getElementById('balanceChips').classList.add('hidden');
+            document.getElementById('btnSwap').textContent = 'Connect Wallet to Swap';
+            document.getElementById('btnSwap').disabled = true;
+            document.getElementById('txResult').classList.add('hidden');
+            document.getElementById('walletDropdown').classList.add('hidden');
+
+            showToast('Disconnected');
+        };
+
+        // ── COPY ADDRESS ──────────────────────────────────────────────────────────────
+        window.copyAddress = function () {
+            if (!wallet) return;
+            navigator.clipboard.writeText(wallet);
+            document.getElementById('walletDropdown').classList.add('hidden');
+            showToast('Address copied!');
+        };
+
+        // ── DROPDOWN ──────────────────────────────────────────────────────────────────
+        window.toggleDropdown = function () {
+            document.getElementById('walletDropdown').classList.toggle('hidden');
+        };
+
+        // ปิด dropdown ถ้าคลิกนอก
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('walletDropdown');
+            const btn = document.getElementById('btnConnect');
+            if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // ── FETCH BALANCES ────────────────────────────────────────────────────────────
+        async function fetchBalances() {
+            if (!wallet) return;
+            try {
+                const [usdc, eurc] = await Promise.all([
+                    getTokenBalance(TOKEN_CONTRACTS.USDC, wallet),
+                    getTokenBalance(TOKEN_CONTRACTS.EURC, wallet),
+                ]);
+                document.getElementById('usdcBal').textContent = `USDC: ${usdc}`;
+                document.getElementById('eurcBal').textContent = `EURC: ${eurc}`;
+            } catch (e) {
+                console.error('Balance fetch error:', e);
+            }
+        }
+
+        async function getTokenBalance(tokenAddr, userAddr) {
+            // eth_call → ERC20 balanceOf(address)
+            const data = ERC20_ABI_BALANCE + userAddr.replace('0x', '').padStart(64, '0');
+            const result = await window.ethereum.request({
+                method: 'eth_call',
+                params: [{ to: tokenAddr, data }, 'latest']
+            });
+            // USDC/EURC = 6 decimals
+            const raw = BigInt(result || '0x0');
+            return (Number(raw) / 1e6).toFixed(2);
         }
 
         // ── AUTO-CONNECT ──────────────────────────────────────────────────────────────
@@ -253,13 +367,16 @@
                 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                 if (accounts.length > 0) {
                     wallet = accounts[0];
+                    adapter = await createViemAdapterFromProvider({ provider: window.ethereum });
+                    kit = new AppKit();
                     setWalletUI(wallet);
+                    await fetchBalances();
                 }
             } catch (e) { }
         });
 
         // ── DIRECTION ─────────────────────────────────────────────────────────────────
-        function setDirection(dir) {
+        window.setDirection = function (dir) {
             direction = dir;
             const isUtoE = dir === 'usdc_to_eurc';
             document.getElementById('fromLabel').textContent = isUtoE ? 'USDC' : 'EURC';
@@ -274,19 +391,18 @@
             document.getElementById('toAmount').textContent = '~';
             document.getElementById('amountIn').value = '';
             document.getElementById('txResult').classList.add('hidden');
-        }
+        };
 
-        // preview
         document.getElementById('amountIn').addEventListener('input', function () {
             const val = parseFloat(this.value);
             document.getElementById('toAmount').textContent = isNaN(val) ? '~' : '≈ ' + val.toFixed(2);
         });
 
         // ── SWAP ──────────────────────────────────────────────────────────────────────
-        function handleSwapClick() {
+        window.handleSwapClick = function () {
             if (!wallet) { showToast('กรุณา Connect Wallet ก่อน', true); return; }
             doSwap();
-        }
+        };
 
         async function doSwap() {
             const amountIn = parseFloat(document.getElementById('amountIn').value);
@@ -301,30 +417,36 @@
             document.getElementById('txResult').classList.add('hidden');
 
             try {
-                const res = await fetch('https://furari-world.vercel.app/api/swap', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amountIn, direction }),
-                });
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || data.error || 'Swap failed');
-
-                // แสดงผล
                 const tokenIn = direction === 'usdc_to_eurc' ? 'USDC' : 'EURC';
                 const tokenOut = direction === 'usdc_to_eurc' ? 'EURC' : 'USDC';
-                const txHash = data.txHash || '';
-                const explorerUrl = data.explorerUrl || (txHash ? `https://testnet.arcscan.app/tx/${txHash}` : '#');
+
+                // ── ตาม doc: ใช้ adapter จาก window.ethereum (MetaMask ของ user) ────────
+                const result = await kit.swap({
+                    from: { adapter, chain: 'Arc_Testnet' },
+                    tokenIn,
+                    tokenOut,
+                    amountIn: String(amountIn),
+                    config: { kitKey: KIT_KEY },
+                });
+
+                console.log('Swap result:', result);
+
+                const txHash = result?.txHash || result?.transactionHash || result?.hash || '';
+                const amountOut = result?.amountOut || '';
+                const explorerUrl = result?.explorerUrl || (txHash ? `https://testnet.arcscan.app/tx/${txHash}` : '#');
 
                 document.getElementById('txResult').classList.remove('hidden');
                 document.getElementById('resultSummary').textContent = `${amountIn} ${tokenIn} → ${tokenOut}`;
-                document.getElementById('resultAmountOut').textContent = data.amountOut ? `${data.amountOut} ${tokenOut}` : `~ ${tokenOut}`;
-                document.getElementById('txHashLink').textContent = txHash || 'Pending...';
+                document.getElementById('resultAmountOut').textContent = amountOut ? `${amountOut} ${tokenOut}` : `~ ${tokenOut}`;
+                document.getElementById('txHashLink').textContent = txHash || 'View on Explorer';
                 document.getElementById('txHashLink').href = explorerUrl;
 
+                // อัพเดท balance หลัง swap
+                await fetchBalances();
                 showToast(`✓ Swapped ${amountIn} ${tokenIn} → ${tokenOut}`);
 
             } catch (err) {
+                console.error('Swap error:', err);
                 showToast(err.message || 'Swap failed', true);
             } finally {
                 btn.disabled = false;
@@ -334,14 +456,14 @@
 
         // ── TOAST ─────────────────────────────────────────────────────────────────────
         let toastTimer;
-        function showToast(msg, err = false) {
+        window.showToast = function (msg, err = false) {
             const el = document.getElementById('toast');
             el.textContent = msg;
             el.style.color = err ? '#f87171' : '#34d399';
             el.classList.add('show');
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
-        }
+        };
     </script>
 </body>
 
